@@ -4,7 +4,6 @@ import sys
 import signal
 import pygame
 from pygame.locals import *
-import sqlite3
 
 import os
 
@@ -26,18 +25,6 @@ for sig in [signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT]:
     signal.signal(sig, signal_term_handler)
 
 screen = None;
-
-testdb = None
-
-try:
-    testdb = sqlite3.connect('test.db')
-    cur = testdb.cursor()
-    #cur.execute("CREATE TABLE Logbook(Id INTEGER PRIMARY KEY, Cardid TEXT, Name TEXT, Time TEXT, date TEXT)")
-except sqlite3.Error, e:
-    if testdb:
-        testdb.rollback()
-    print "Error %s:" % e.args[0]
-    sys.exit(1)
 
 #"Ininitializes a new pygame screen using the framebuffer"
 # Based on "Python GUI in Linux frame buffer"
@@ -83,7 +70,6 @@ while 1:
     for event in pygame.event.get():
         try:
             if event.key == K_ESCAPE:
-                testdb.close()
                 sys.exit()
         except AttributeError:
             pass
@@ -113,17 +99,15 @@ while 1:
     if uid is not None:
         #print "Card detected:", uid
         if uid in user_hash.keys():
-            username = user_hash[uid]
             text_surface = font.render("Hello",
                 True, (0, 0, 0))
             screen.blit(text_surface, (20, 210))                    
-            text_surface = font.render(username,
+            text_surface = font.render(user_hash[uid],
                 True, (0, 0, 0))
             screen.blit(text_surface, (20, 270))
-            testdb.execute("""INSERT INTO Logbook(Cardid,Name,Time,date) VALUES(?,?,?,?);""",(uid,username,timestr,datestr))
-            testdb.commit()
         uid = None #reset uid to None
         pygame.display.update()
+        time.sleep(1) #pause for 1 seconds
     time.sleep(1)
 #get out of full screen
 #size = (pygame.display.Info().current_w, pygame.display.Info().current_h)
