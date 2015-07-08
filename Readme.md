@@ -6,6 +6,7 @@ This is designed to run on a Raspberry Pi with the NXP Explore-NFC card reader a
 Requirements:
 * python
 * nxppy python library (https://github.com/svvitale/nxppy)
+* pygame (sudo apt-get install python-pygame)
 
 Currently contains 2 scripts:
 
