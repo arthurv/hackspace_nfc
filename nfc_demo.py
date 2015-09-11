@@ -105,6 +105,13 @@ while 1:
             text_surface = font.render(user_hash[uid],
                 True, (0, 0, 0))
             screen.blit(text_surface, (20, 270))
+        else:
+            text_surface = font.render("Unknown card",
+                True, (0, 0, 0))
+            screen.blit(text_surface, (20, 210))                    
+            text_surface = font.render("Please register",
+                True, (0, 0, 0))
+            screen.blit(text_surface, (20, 270))
         uid = None #reset uid to None
         pygame.display.update()
         time.sleep(1) #pause for 1 seconds

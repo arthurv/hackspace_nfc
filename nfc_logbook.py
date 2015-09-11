@@ -5,6 +5,7 @@ import signal
 import pygame
 from pygame.locals import *
 import sqlite3
+import datetime
 
 import os
 
@@ -30,13 +31,13 @@ screen = None;
 testdb = None
 
 try:
-    testdb = sqlite3.connect('test.db')
+    testdb = sqlite3.connect("test.db")
     cur = testdb.cursor()
-    #cur.execute("CREATE TABLE Logbook(Id INTEGER PRIMARY KEY, Cardid TEXT, Name TEXT, Time TEXT, date TEXT)")
-except sqlite3.Error, e:
+    #cur.execute("CREATE TABLE Logbook(Id INTEGER PRIMARY KEY, Cardid TEXT, Name TEXT, Time TEXT, date TEXT, duration TEXT)")
+except:
     if testdb:
         testdb.rollback()
-    print "Error %s:" % e.args[0]
+    sys.stderr.write("Unable to connect to database")
     sys.exit(1)
 
 #"Ininitializes a new pygame screen using the framebuffer"
@@ -79,14 +80,14 @@ pygame.display.update()
 uid = None
 # Get a font and use it render some text on a Surface.
 font = pygame.font.Font(None, 80)
+
+logged = False #is anyone logged in
+
 while 1:
     for event in pygame.event.get():
-        try:
-            if event.key == K_ESCAPE:
-                testdb.close()
-                sys.exit()
-        except AttributeError:
-            pass
+        if event.key == K_ESCAPE:
+            testdb.close()
+            sys.exit()
     #clear the screen
     pygame.mouse.set_visible(False) #hide the mouse cursor
     screen.fill((255, 255, 255))
@@ -104,6 +105,15 @@ while 1:
         True, (0, 0, 0))
     # Blit the text
     screen.blit(text_surface, (20, 90))
+    if logged:
+        tdur = datetime.datetime.now() - tlogin
+        logstr = str(tdur).split('.',2)[0]
+        text_surface = font.render(username,
+            True, (0, 0, 0))
+        screen.blit(text_surface, (20, 210))
+        text_surface = font.render(logstr,
+            True, (0, 0, 0))
+        screen.blit(text_surface, (20, 270))    
     # Update the display
     pygame.display.update()
     try:
@@ -114,14 +124,32 @@ while 1:
         #print "Card detected:", uid
         if uid in user_hash.keys():
             username = user_hash[uid]
+            if logged: #logout
+                logged = False
+                #erase logged text
+                text_surface = font.render(username,
+                    True, (255, 255, 255))
+                screen.blit(text_surface, (20, 210))
+                text_surface = font.render(logstr,
+                    True, (255, 255, 255))
+                screen.blit(text_surface, (20, 270))
+                cur.execute("""INSERT INTO Logbook(Cardid,Name,Time,date,duration) VALUES(?,?,?,?,?);""",(loggedid,loggeduser,timestr,datestr,logstr))
+                testdb.commit()
+            else:
+                logged = True
+                tlogin = datetime.datetime.now()
+                loggeduser = username
+                loggedid = uid        
             text_surface = font.render("Hello",
                 True, (0, 0, 0))
             screen.blit(text_surface, (20, 210))                    
             text_surface = font.render(username,
                 True, (0, 0, 0))
             screen.blit(text_surface, (20, 270))
-            testdb.execute("""INSERT INTO Logbook(Cardid,Name,Time,date) VALUES(?,?,?,?);""",(uid,username,timestr,datestr))
-            testdb.commit()
+        else:
+            text_surface = font.render("unknown card",
+                True, (0, 0, 0))
+            screen.blit(text_surface, (20, 210))                
         uid = None #reset uid to None
         pygame.display.update()
     time.sleep(1)
