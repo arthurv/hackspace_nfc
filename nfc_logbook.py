@@ -11,12 +11,12 @@ import os
 
 mifare = nxppy.Mifare()
 
-f = open("user_list.csv",'r')
+f = open("/home/pi/user_list.csv",'r')
 
 user_hash = {}
 
 for line in f:
-    user_hash[line.split(',')[0]] = line.split(',')[1].strip()
+    user_hash[line.split(',')[0].upper()] = line.split(',')[1].strip()
 f.close()
 def signal_term_handler(signum = None, frame = None):
     sys.stderr.write("Terminated.\n")
@@ -31,7 +31,7 @@ screen = None;
 testdb = None
 
 try:
-    testdb = sqlite3.connect("test.db")
+    testdb = sqlite3.connect("/home/pi/test.db")
     cur = testdb.cursor()
     #cur.execute("CREATE TABLE Logbook(Id INTEGER PRIMARY KEY, Cardid TEXT, Name TEXT, Time TEXT, date TEXT, duration TEXT)")
 except:
@@ -92,7 +92,7 @@ while 1:
     pygame.mouse.set_visible(False) #hide the mouse cursor
     screen.fill((255, 255, 255))
     # Render the hackspace logo at 400,160
-    logo = pygame.image.load('logo1.1_300_trans.png').convert()
+    logo = pygame.image.load('/home/pi/logo1.1_300_trans.png').convert()
     screen.blit(logo, (400, 160))     
     # Render some text with a background color
     datestr = time.strftime("%A, %d %b %Y", time.localtime())
