@@ -119,12 +119,13 @@ while 1:
     try:
         uid = mifare.select()
     except nxppy.SelectError:
+        uid = None
         pass
     if uid is not None:
         #print "Card detected:", uid
         if uid in user_hash.keys():
             username = user_hash[uid]
-            if logged: #logout
+            if (logged and (tdur.total_seconds() > 120)): #logout
                 logged = False
                 #erase logged text
                 text_surface = font.render(username,
@@ -135,6 +136,8 @@ while 1:
                 screen.blit(text_surface, (20, 270))
                 cur.execute("""INSERT INTO Logbook(Cardid,Name,Time,date,duration) VALUES(?,?,?,?,?);""",(loggedid,loggeduser,timestr,datestr,logstr))
                 testdb.commit()
+            elif (logged and (tdur.total_seconds() < 120)):
+                continue
             else:
                 logged = True
                 tlogin = datetime.datetime.now()
