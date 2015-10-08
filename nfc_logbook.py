@@ -6,11 +6,12 @@ import pygame
 from pygame.locals import *
 import sqlite3
 import datetime
-
+import serial
 import os
 
 mifare = nxppy.Mifare()
-
+device = '/dev/ttyUSB0'
+ser = serial.Serial(device, 9600)
 f = open("/home/pi/user_list.csv",'r')
 
 user_hash = {}
@@ -82,7 +83,7 @@ uid = None
 font = pygame.font.Font(None, 80)
 
 logged = False #is anyone logged in
-
+logouttime = datetime.datetime.now()
 while 1:
     for event in pygame.event.get():
         if event.key == K_ESCAPE:
@@ -122,11 +123,15 @@ while 1:
         uid = None
         pass
     if uid is not None:
+        tslo = datetime.datetime.now() - logouttime
+        if (tslo.total_seconds() < 30):
+            continue
         #print "Card detected:", uid
         if uid in user_hash.keys():
             username = user_hash[uid]
-            if (logged and (tdur.total_seconds() > 120)): #logout
+            if (logged and (tdur.total_seconds() > 10)): #logout
                 logged = False
+                ser.write('O')
                 #erase logged text
                 text_surface = font.render(username,
                     True, (255, 255, 255))
@@ -136,16 +141,18 @@ while 1:
                 screen.blit(text_surface, (20, 270))
                 cur.execute("""INSERT INTO Logbook(Cardid,Name,Time,date,duration) VALUES(?,?,?,?,?);""",(loggedid,loggeduser,timestr,datestr,logstr))
                 testdb.commit()
-            elif (logged and (tdur.total_seconds() < 120)):
+                logouttime = datetime.datetime.now()
+            elif (logged and (tdur.total_seconds() < 10)):
                 continue
             else:
                 logged = True
+                ser.write('H')
                 tlogin = datetime.datetime.now()
                 loggeduser = username
                 loggedid = uid        
-            text_surface = font.render("Hello",
-                True, (0, 0, 0))
-            screen.blit(text_surface, (20, 210))                    
+            #text_surface = font.render("Hello",
+            #    True, (0, 0, 0))
+            #screen.blit(text_surface, (20, 210))                    
             text_surface = font.render(username,
                 True, (0, 0, 0))
             screen.blit(text_surface, (20, 270))
